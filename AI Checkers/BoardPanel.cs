@@ -12,6 +12,7 @@ namespace AICheckers
     public class BoardPanel : Panel
     {
         IAI AI = null;
+        IAI AI2 = null;
 
         //Assets
         Image checkerRed = Resources.checkerred;
@@ -36,6 +37,8 @@ namespace AICheckers
         List<Move> possibleMoves = new List<Move>();
         //List<Point> highlightedSquares = new List<Point>();
 
+        List<Tuple<CheckerColour , Move>> moves_played;
+
         CheckerColour currentTurn = CheckerColour.Black;
         private System.ComponentModel.IContainer components;
 
@@ -48,35 +51,9 @@ namespace AICheckers
             this.ResizeRedraw = true;
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Opaque | ControlStyles.AllPaintingInWmPaint, true);
 
-            //Initialize board
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    Board[i, j] = new Square();
-                    Board[i, j].Colour = CheckerColour.Empty;
-                }
-            }
+            init_game();
 
-            //Setup Pieces
-            for (int i = 0; i < 8; i += 1)
-            {
-                int offset = 0;
-                if (i % 2 != 0)
-                {
-                    offset++;
-                }
-                for (int j = offset; j < 8; j += 2)
-                {
-                    if (i < 3) Board[i, j].Colour = CheckerColour.Red;
-                    if (i > 4) Board[i, j].Colour = CheckerColour.Black;
-                }
-            }
-
-            AI = new AI_Tree();
-            AI.Colour = CheckerColour.Black;
-
-            AdvanceTurn();
+            //AdvanceTurn();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -180,7 +157,7 @@ namespace AICheckers
             if (Board[clickedY, clickedX].Colour != CheckerColour.Empty
                 && Board[clickedY, clickedX].Colour != currentTurn)
                 return;
-          
+
             //Determine if this is a move or checker selection
             List<Move> matches = possibleMoves.Where(m => m.Destination == clickedPoint).ToList<Move>();
             if (matches.Count > 0)
@@ -196,9 +173,16 @@ namespace AICheckers
                 possibleMoves.Clear();
 
                 Console.WriteLine("Selected Checker: {0}",selectedChecker.ToString());
+                Console.WriteLine("current turn: {0}",currentTurn.ToString());
                 
                 Move[] OpenSquares = Utils.GetOpenSquares(Board, selectedChecker);
-                possibleMoves.AddRange(OpenSquares);
+                // Check if we have captued checkes
+                Move[] MoveWithCaptures = Utils.GetAllMoveCapturedByColor(Board, currentTurn);
+
+                if (MoveWithCaptures.Any())
+                    possibleMoves.AddRange(MoveWithCaptures);
+                else
+                    possibleMoves.AddRange(OpenSquares);
 
                 this.Invalidate();
             }            
@@ -206,7 +190,18 @@ namespace AICheckers
 
         private void MoveChecker(Move move)
         {
-            Console.WriteLine(move.ToString());
+            // Check if we have captued checkes
+            Move[] MoveWithCaptures = Utils.GetAllMoveCapturedByColor(Board, currentTurn);
+            Console.WriteLine("Tour actuelle : "+move.Captures.Any());
+            Console.WriteLine("Tour actuelle : "+MoveWithCaptures.Count());
+
+            if (!move.Captures.Any() && MoveWithCaptures.Any())
+            {
+                MessageBox.Show("Une capture est possible !!!");
+            }
+
+            // Saved the played move
+            moves_played.Add(new Tuple<CheckerColour, AICheckers.Move>(currentTurn, move));
 
             Board[move.Destination.Y, move.Destination.X].Colour = Board[move.Source.Y, move.Source.X].Colour;
             Board[move.Destination.Y, move.Destination.X].King = Board[move.Source.Y, move.Source.X].King;
@@ -247,6 +242,43 @@ namespace AICheckers
             Board[square.Y, square.X].King = false;
         }
 
+        private void init_game()
+        {
+            //Initialize board
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    Board[i, j] = new Square();
+                    Board[i, j].Colour = CheckerColour.Empty;
+                }
+            }
+
+            //Setup Pieces
+            for (int i = 0; i < 8; i += 1)
+            {
+                int offset = 0;
+                if (i % 2 != 0)
+                {
+                    offset++;
+                }
+                for (int j = offset; j < 8; j += 2)
+                {
+                    if (i < 3) Board[i, j].Colour = CheckerColour.Red;
+                    if (i > 4) Board[i, j].Colour = CheckerColour.Black;
+                    Board[i, j].King = true;
+                }
+            }
+
+            AI = new AI_Tree();
+            AI.Colour = CheckerColour.Red;
+
+            AI2 = new AI_Tree();
+            AI2.Colour = CheckerColour.Black;
+
+            moves_played = new List<Tuple<CheckerColour, AICheckers.Move>>();
+        }
+
         private void AdvanceTurn()
         {
             if (currentTurn == CheckerColour.Red)
@@ -258,11 +290,44 @@ namespace AICheckers
                 currentTurn = CheckerColour.Red;
             }
 
-            if (AI != null && AI.Colour == currentTurn)
+            // check victory of one side
+            int redCount = 0;
+            int blackCount = 0;
+            for(int i=0;i<8;i++)
+                for(int j=0; j<8; j++) {
+                    if (Board[i, j].Colour == CheckerColour.Red)
+                        redCount++;
+                    if (Board[i, j].Colour == CheckerColour.Black)
+                        blackCount++;
+                }
+            
+            // If a winner is present
+            if (blackCount == 0 || redCount == 0)
             {
-                Move aiMove = AI.Process(Board);
-                MoveChecker(aiMove);
+                String side = blackCount == 0 ? "rouges" : "noirs";
+                // display the message and ask the user want to replay
+                if (MessageBox.Show("Les " + side + " ont gagnés voulez-vous rejouer ?", "Victoire des " + side,
+                                  MessageBoxButtons.YesNo,
+                                  MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    init_game();
+                else
+                    System.Windows.Forms.Application.Exit();
+
             }
+
+            
+            //// Let the AI play
+            //if (AI != null && AI.Colour == currentTurn)
+            //{
+            //    Move aiMove = AI.Process(Board);
+            //    MoveChecker(aiMove);
+            //}
+
+            //if (AI2 != null && AI2.Colour == currentTurn)
+            //{
+            //    Move aiMove = AI2.Process(Board);
+            //    MoveChecker(aiMove);
+            //}
         }
 
         private void InitializeComponent()

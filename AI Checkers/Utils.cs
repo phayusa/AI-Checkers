@@ -11,11 +11,11 @@ namespace AICheckers
         public static Move[] GetAllMoveCapturedByColor(Square[,] Board, CheckerColour color)
         {
             List<Move> result = new List<Move>();
-            for (int x = 0; x < 8; x++)
-                for (int y = 0; y < 8; y++)
-                    if (Board[x,y].Colour == color)
+            for (int x = 0; x < BoardPanel.sizeCheckers; x++)
+                for (int y = 0; y < BoardPanel.sizeCheckers; y++)
+                    if (Board[y,x].Colour == color)
                     {
-                        foreach (Move move in GetOpenSquares(Board, new Point(y, x)))
+                        foreach (Move move in GetOpenSquares(Board, new Point(x, y)))
                             if (move.Captures.Any())
                                 result.Add(move);
                     }
@@ -175,7 +175,7 @@ namespace AICheckers
             // The possibility for the king to move
             int[,] possibility = new int[4,2]{ {1,1},{1,-1}, {-1,1}, {-1,-1}};
             ////King move
-            if ((Board[checker.X, checker.Y].King))
+            if ((Board[checker.Y, checker.X].King))
             {
                 for (int i = 0; i < 4; i++)
                 {
@@ -185,33 +185,44 @@ namespace AICheckers
                     List<Move> empty_move = new List<Move>();
                     List<Move> captured_move = new List<Move>();
 
-                    while (IsValidPoint(test_x, test_y))
+                    while (IsValidPoint(test_y, test_x))
                     {
                         if (Board[test_y, test_x].Colour == CheckerColour.Empty)
                         {
                             Move move = new Move(new Point(checker.X, checker.Y), new Point(test_x, test_y));
                             empty_move.Add(move);
-                            //// Add the position
-                            //OpenSquares.Add(move);
-
-                            ////Use recursion to find multiple captures
-                            //OpenSquares.AddRange(GetOpenSquares(Board, new Point(test_x, test_y), move, priorPositions));
                         }
                         else
                         {
+                            // Position of the king
                             int further_x = test_x + possibility[i, 0];
                             int further_y = test_y + possibility[i, 1];
-                            if (IsValidPoint(further_x, further_y) && Board[test_x, test_y].Colour != playerColor && Board[further_x, further_y].Colour == CheckerColour.Empty)
+
+                            // Check if the point to catch is a ennemy
+                            // And if it is 
+                            if (IsValidPoint(further_x, further_y) && Board[test_y, test_x].Colour != playerColor && Board[further_y, further_x].Colour == CheckerColour.Empty)
                             {
                                 empty_move.Clear();
                                 Move move = new Move(new Point(checker.X, checker.Y), new Point(further_x, further_y));
                                 move.Captures.Add(new Point(test_x, test_y));
                                 move.Captures.AddRange(lastMove.Captures);
+
                                 // Add the position
-                                //OpenSquares.Add(move);
+                                OpenSquares.Add(move);
+
+                                Square[,] copy = Board.Clone() as Square[,];
+
+                                Square tmp = new Square();
+                                tmp.Colour = CheckerColour.Empty;
+                                copy[checker.Y, checker.X] = tmp;
+                                copy[test_y, test_x] = tmp;
+
+                                copy[further_y, further_x] = Board[checker.Y, checker.X];
+
+                                break;
 
                                 //Use recursion to find multiple captures
-                                captured_move.AddRange(GetOpenSquares(Board, new Point(further_x, further_y), move, priorPositions));
+                                //captured_move.AddRange(GetOpenSquares(Board, new Point(further_x, further_y), move, priorPositions));
                             }
                         }
 
@@ -248,7 +259,7 @@ namespace AICheckers
 
         private static bool IsValidPoint(int x, int y)
         {
-            if (0 <= x && x < 8 && 0 <= y && y < 8) return true;
+            if (0 <= x && x < BoardPanel.sizeCheckers && 0 <= y && y < BoardPanel.sizeCheckers) return true;
             return false;
         }
 

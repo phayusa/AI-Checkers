@@ -9,10 +9,13 @@ using AICheckers.Properties;
 
 namespace AICheckers
 {
+    
     public class BoardPanel : Panel
     {
         IAI AI = null;
         IAI AI2 = null;
+
+        public static int sizeCheckers = 10; 
 
         //Assets
         Image checkerRed = Resources.checkerred;
@@ -42,7 +45,7 @@ namespace AICheckers
         CheckerColour currentTurn = CheckerColour.Black;
         private System.ComponentModel.IContainer components;
 
-        Square[,] Board = new Square[8,8];
+        Square[,] Board = new Square[sizeCheckers,sizeCheckers];
         
         public BoardPanel()
             : base()
@@ -65,7 +68,7 @@ namespace AICheckers
             e.Graphics.Clear(lightSquare);
 
             //Draw the board
-            squareWidth = (Width) / 8;
+            squareWidth = (Width) / sizeCheckers;
             for (int c = 0; c < Width; c += squareWidth)
             {
                 int offset = 0;
@@ -103,9 +106,9 @@ namespace AICheckers
             e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
 
             //Draw Checker Images
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < sizeCheckers; j++)
                 {
                     if (Board[i,j].Colour == CheckerColour.Red)
                     {
@@ -148,8 +151,8 @@ namespace AICheckers
         
         protected override void OnMouseClick(MouseEventArgs e)
         {
-            int clickedX = (int)(((double)e.X / (double)Width) * 8.0d);
-            int clickedY = (int)(((double)e.Y / (double)Height) * 8.0d);
+            int clickedX = (int)(((double)e.X / (double)Width) * (double)sizeCheckers);
+            int clickedY = (int)(((double)e.Y / (double)Height) * (double)sizeCheckers);
 
             Point clickedPoint = new Point(clickedX, clickedY);
 
@@ -245,9 +248,9 @@ namespace AICheckers
         private void init_game()
         {
             //Initialize board
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < sizeCheckers; j++)
                 {
                     Board[i, j] = new Square();
                     Board[i, j].Colour = CheckerColour.Empty;
@@ -255,17 +258,17 @@ namespace AICheckers
             }
 
             //Setup Pieces
-            for (int i = 0; i < 8; i += 1)
+            for (int i = 0; i < sizeCheckers; i += 1)
             {
                 int offset = 0;
                 if (i % 2 != 0)
                 {
                     offset++;
                 }
-                for (int j = offset; j < 8; j += 2)
+                for (int j = offset; j < sizeCheckers; j += 2)
                 {
-                    if (i < 3) Board[i, j].Colour = CheckerColour.Red;
-                    if (i > 4) Board[i, j].Colour = CheckerColour.Black;
+                    if (i < 4) Board[i, j].Colour = CheckerColour.Red;
+                    if (i > 5) Board[i, j].Colour = CheckerColour.Black;
                     Board[i, j].King = true;
                 }
             }
@@ -293,8 +296,8 @@ namespace AICheckers
             // check victory of one side
             int redCount = 0;
             int blackCount = 0;
-            for(int i=0;i<8;i++)
-                for(int j=0; j<8; j++) {
+            for(int i=0;i<sizeCheckers;i++)
+                for(int j=0; j<sizeCheckers; j++) {
                     if (Board[i, j].Colour == CheckerColour.Red)
                         redCount++;
                     if (Board[i, j].Colour == CheckerColour.Black)

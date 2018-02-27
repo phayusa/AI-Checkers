@@ -56,7 +56,7 @@ namespace AICheckers
 
             init_game();
 
-            //AdvanceTurn();
+            AdvanceTurn();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -200,7 +200,8 @@ namespace AICheckers
 
             if (!move.Captures.Any() && MoveWithCaptures.Any())
             {
-                MessageBox.Show("Une capture est possible !!!");
+//                MessageBox.Show("Une capture est possible !!!");
+                return;
             }
 
             // Saved the played move
@@ -217,7 +218,7 @@ namespace AICheckers
             selectedChecker.Y = -1;
 
             //Kinging
-            if ((move.Destination.Y == 7 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+            if ((move.Destination.Y == 9 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
                 || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
                 Board[move.Destination.Y, move.Destination.X].King = true;
@@ -269,14 +270,13 @@ namespace AICheckers
                 {
                     if (i < 4) Board[i, j].Colour = CheckerColour.Red;
                     if (i > 5) Board[i, j].Colour = CheckerColour.Black;
-                    Board[i, j].King = true;
                 }
             }
 
-            AI = new AI_Tree();
+            AI = new AI_Learn();
             AI.Colour = CheckerColour.Red;
 
-            AI2 = new AI_Tree();
+            AI2 = new AI_Learn();
             AI2.Colour = CheckerColour.Black;
 
             moves_played = new List<Tuple<CheckerColour, AICheckers.Move>>();
@@ -319,18 +319,18 @@ namespace AICheckers
             }
 
             
-            //// Let the AI play
-            //if (AI != null && AI.Colour == currentTurn)
-            //{
-            //    Move aiMove = AI.Process(Board);
-            //    MoveChecker(aiMove);
-            //}
+            // Let the AI play
+            if (AI != null && AI.Colour == currentTurn)
+            {
+                Move aiMove = AI.Process(Board);
+                MoveChecker(aiMove);
+            }
 
-            //if (AI2 != null && AI2.Colour == currentTurn)
-            //{
-            //    Move aiMove = AI2.Process(Board);
-            //    MoveChecker(aiMove);
-            //}
+            if (AI2 != null && AI2.Colour == currentTurn)
+            {
+                Move aiMove = AI2.Process(Board);
+                MoveChecker(aiMove);
+            }
         }
 
         private void InitializeComponent()

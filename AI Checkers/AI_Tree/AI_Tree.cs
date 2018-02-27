@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace AICheckers
@@ -20,36 +18,27 @@ namespace AICheckers
         int WEIGHT_ATRISK = 3;
         int WEIGHT_KINGATRISK = 4;
 
-        //Strategic
-        int WEIGHT_MAKEKING = 1;
-        
-        CheckerColour colour;
+        private Tree<Move> _gameTree;
 
-        Tree<Move> gameTree;
+        public CheckerColour Colour { get; set; }
 
-        public CheckerColour Colour
-        {
-            get { return colour; }
-            set { colour = value; }
-        }
-
-        public Move Process(Square[,] Board)
+        public Move Process(Square[,] board)
         {
             Console.WriteLine();
-            Console.WriteLine("AI: Building Game Tree...");
+            Console.WriteLine(@"AI: Building Game Tree...");
 
-            gameTree = new Tree<Move>(new Move());
+            _gameTree = new Tree<Move>(new Move());
 
             for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    if (Board[i, j].Colour == Colour)
+                    if (board[i, j].Colour == Colour)
                     {
-                        foreach (Move myPossibleMove in Utils.GetOpenSquares(Board, new Point(j, i)))
+                        foreach (Move myPossibleMove in Utils.GetOpenSquares(board, new Point(j, i)))
                         {
                             
-                            CalculateChildMoves(0, gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(Board));
+                            CalculateChildMoves(0, _gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(board));
 
                             //gameTree.AddChildren(Utils.GetOpenSquares(Board, new Point(j, i)));
                         }
@@ -58,9 +47,9 @@ namespace AICheckers
             }
 
             Console.WriteLine();
-            Console.WriteLine("AI: Scoring Game Tree...");
+            Console.WriteLine(@"AI: Scoring Game Tree...");
 
-            ScoreTreeMoves(Board);
+            ScoreTreeMoves(board);
 
             return SumTreeMoves();
         }
@@ -73,9 +62,11 @@ namespace AICheckers
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    result[i, j] = new Square();
-                    result[i, j].Colour = sourceBoard[i, j].Colour;
-                    result[i, j].King = sourceBoard[i, j].King;
+                    result[i, j] = new Square
+                    {
+                        Colour = sourceBoard[i, j].Colour,
+                        King = sourceBoard[i, j].King
+                    };
                 }
             }
 
@@ -117,29 +108,29 @@ namespace AICheckers
             }
         }
 
-        private Square[,] ExecuteVirtualMove(Move move, Square[,] Board)
+        private Square[,] ExecuteVirtualMove(Move move, Square[,] board)
         {
-            Board[move.Destination.Y, move.Destination.X].Colour = Board[move.Source.Y, move.Source.X].Colour;
-            Board[move.Destination.Y, move.Destination.X].King = Board[move.Source.Y, move.Source.X].King;
-            Board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
-            Board[move.Source.Y, move.Source.X].King = false;
+            board[move.Destination.Y, move.Destination.X].Colour = board[move.Source.Y, move.Source.X].Colour;
+            board[move.Destination.Y, move.Destination.X].King = board[move.Source.Y, move.Source.X].King;
+            board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
+            board[move.Source.Y, move.Source.X].King = false;
 
             //Kinging
-            if ((move.Destination.Y == 7 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
-                || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
+            if ((move.Destination.Y == 7 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+                || (move.Destination.Y == 0 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
-                Board[move.Destination.Y, move.Destination.X].King = true;
+                board[move.Destination.Y, move.Destination.X].King = true;
             }
 
-            return Board;
+            return board;
         }
 
-        private void ScoreTreeMoves(Square[,] Board)
+        private void ScoreTreeMoves(Square[,] board)
         {
             //Iterate over top-level (currently possible) moves
-            Action<Move> scoreMove = (Move move) => move.Score = ScoreMove(move, Board);
+            Action<Move> scoreMove = move => move.Score = ScoreMove(move, board);
 
-            foreach (Tree<Move> possibleMove in gameTree.Children)
+            foreach (Tree<Move> possibleMove in _gameTree.Children)
             {
                 possibleMove.Traverse(scoreMove);
             }
@@ -150,18 +141,18 @@ namespace AICheckers
         {
             //Iterate over top-level (currently possible) moves
 
-            int branchSum = 0;
-            Action<Move> sumScores = (Move move) => branchSum += move.Score;
+            int[] branchSum = {0};
+            Action<Move> sumScores = move => branchSum[0] += move.Score;
 
-            foreach (Tree<Move> possibleMove in gameTree.Children)
+            foreach (Tree<Move> possibleMove in _gameTree.Children)
             {
                 possibleMove.Traverse(sumScores);
-                possibleMove.Value.Score += branchSum;
-                branchSum = 0;
+                possibleMove.Value.Score += branchSum[0];
+                branchSum[0] = 0;
             }
 
             //Return highest score
-            return gameTree.Children.OrderByDescending(o => o.Value.Score).ToList()[0].Value;
+            return _gameTree.Children.OrderByDescending(o => o.Value.Score).ToList()[0].Value;
         }
 
         private int ScoreMove(Move move, Square[,] board)
@@ -210,12 +201,12 @@ namespace AICheckers
 
 
             //Subtract score if we are evaluating an opponent's piece
-            if (board[move.Source.Y, move.Source.X].Colour != colour) score *= -1;
+            if (board[move.Source.Y, move.Source.X].Colour != Colour) score *= -1;
 
             Console.WriteLine(
-                "{0,-5} {1} Score: {2,2}",
+                @"{0,-5} {1} Score: {2,2}",
                 board[move.Source.Y, move.Source.X].Colour.ToString(),
-                move.ToString(),
+                move,
                 score
                 ); 
 

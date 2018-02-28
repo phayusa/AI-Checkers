@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="AI_Tree\AI_Tree.cs" />
     <Compile Include="AI_Random\AI_Random.cs" />
+    <Compile Include="Fen.cs" />
     <Compile Include="IAI.cs" />
     <Compile Include="BoardPanel.cs">
       <SubType>Component</SubType>

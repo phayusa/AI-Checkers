@@ -1,4 +1,6 @@
-﻿namespace AICheckers
+﻿using System;
+
+namespace AICheckers
 {
     partial class FormMain
     {
@@ -26,11 +28,11 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent()
+        private void InitializeComponent(String typegame)
         {
             this.components = new System.ComponentModel.Container();
             this.timerRefresh = new System.Windows.Forms.Timer(this.components);
-            this.boardPanel2 = new AICheckers.BoardPanel();
+            this.boardPanel2 = new AICheckers.BoardPanel(typegame);
             this.SuspendLayout();
             // 
             // timerRefresh

@@ -35,19 +35,39 @@ namespace AICheckers
         private readonly List<Move> _possibleMoves = new List<Move>();
         //List<Point> highlightedSquares = new List<Point>();
 
-        private List<Tuple<CheckerColour , Move>> moves_played;
-
         private CheckerColour _currentTurn = CheckerColour.Black;
 
         private readonly Square[,] _board = new Square[sizeCheckers,sizeCheckers];
         
-        public BoardPanel()
+        public BoardPanel(string typegame)
         {
+            switch (typegame)
+            {
+                case "jvj":
+                    _ai = null;
+                    _ai2 = null;
+                    init_game();
+                    break;
+                case "jvia":
+                    _ai = new AI_Random() { Colour = CheckerColour.Red };
+                    _ai2 = null;
+                    init_game();
+                    break;
+                case "iavia":
+                    _ai = new AI_Random { Colour = CheckerColour.Red };
+                    _ai2 = new AI_Random {Colour = CheckerColour.Black};
+                    init_game();
+                    break;
+                default:
+                    _ai = null;
+                    _ai2 = null;
+                    init_game();
+                    break;
+            }
+            
             //this.DoubleBuffered = true;
             ResizeRedraw = true;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Opaque | ControlStyles.AllPaintingInWmPaint, true);
-
-            init_game();
 
             AdvanceTurn();
         }
@@ -173,17 +193,23 @@ namespace AICheckers
         {
             // Check if we have captued checkes
             Move[] moveWithCaptures = Utils.GetAllMoveCapturedByColor(_board, _currentTurn);
-            Console.WriteLine(@"Tour actuelle : "+move.Captures.Any());
-            Console.WriteLine(@"Tour actuelle : "+moveWithCaptures.Length);
+            if (moveWithCaptures.Any())
+            {   Console.WriteLine(@"Tour actuelle : " + move.Captures.Any());
+                Console.WriteLine(@"Tour actuelle : " + moveWithCaptures.Length);
+            }
 
             if (!move.Captures.Any() && moveWithCaptures.Any())
             {
-//                MessageBox.Show("Une capture est possible !!!");
+                Console.WriteLine(@"Played : " + move.Source.X + @" " + move.Source.Y);
+
+                foreach(Move move2 in Utils.GetAllMoveCapturedByColor(_board, _currentTurn)){
+                    Console.WriteLine(@"Possible : " + move2.Source.X + @" " + move2.Source.Y);
+                }
+
+                if (_ai == null || _ai2 == null)
+                    MessageBox.Show(@"Une capture est possible !!!");
                 return;
             }
-
-            // Saved the played move
-            moves_played.Add(new Tuple<CheckerColour, Move>(_currentTurn, move));
 
             _board[move.Destination.Y, move.Destination.X].Colour = _board[move.Source.Y, move.Source.X].Colour;
             _board[move.Destination.Y, move.Destination.X].King = _board[move.Source.Y, move.Source.X].King;
@@ -224,12 +250,13 @@ namespace AICheckers
 
         private void init_game()
         {
+            
             //Initialize board
             for (int i = 0; i < sizeCheckers; i++)
             {
                 for (int j = 0; j < sizeCheckers; j++)
                 {
-                    _board[i, j] = new Square {Colour = CheckerColour.Empty};
+                    _board[i, j] = new Square {Colour = CheckerColour.Empty, King=false};
                 }
             }
 
@@ -247,14 +274,6 @@ namespace AICheckers
                     if (i > 5) _board[i, j].Colour = CheckerColour.Black;
                 }
             }
-
-            //_ai = new AI_Tree();
-            //_ai.Colour = CheckerColour.Red;
-            _ai = new AI_Random { Colour = CheckerColour.Red };
-
-            _ai2 = new AI_Random {Colour = CheckerColour.Black};
-
-            moves_played = new List<Tuple<CheckerColour, Move>>();
         }
 
         private void AdvanceTurn()

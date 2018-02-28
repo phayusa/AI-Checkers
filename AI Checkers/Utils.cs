@@ -185,6 +185,8 @@ namespace AICheckers
                 }
             }
 
+            List<Move> capturesMoves = new List<Move>();
+            
             // The color of the player
             CheckerColour playerColor = board[checker.Y, checker.X].Colour;
             // The possibility for the king to move
@@ -236,10 +238,11 @@ namespace AICheckers
                                     copy[furtherY, furtherX] = board[checker.Y, checker.X];
                                 }
 
-                                break;
-
+                        
                                 //Use recursion to find multiple captures
-                                //captured_move.AddRange(GetOpenSquares(Board, new Point(further_x, further_y), move, priorPositions));
+                                capturesMoves.AddRange(GetOpenSquares(board, new Point(furtherX, furtherY), move, priorPositions));
+                                
+                                break;
                             }
                         }
 
@@ -254,7 +257,7 @@ namespace AICheckers
                 }
             }
 
-            List<Move> capturesMoves = new List<Move>();
+            
             // Check Captures
             foreach(Move move in openSquares)
             {
@@ -269,8 +272,7 @@ namespace AICheckers
 
         private static bool IsValidPoint(int x, int y)
         {
-            if (0 <= x && x < BoardPanel.sizeCheckers && 0 <= y && y < BoardPanel.sizeCheckers) return true;
-            return false;
+            return 0 <= x && x < BoardPanel.sizeCheckers && 0 <= y && y < BoardPanel.sizeCheckers;
         }
     }
 }

@@ -6,9 +6,9 @@ namespace AICheckers
 {
     public partial class FormMain : Form
     {
-        public FormMain()
+        public FormMain(String typeGame)
         {
-            InitializeComponent();
+            InitializeComponent(typeGame);
             Console.WriteLine(@"{0} Version {1}", AssemblyTitle, AssemblyVersion);
             Console.WriteLine(AssemblyCopyright);
             Console.WriteLine(AssemblyDescription);
@@ -47,11 +47,7 @@ namespace AICheckers
             get
             {
                 object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyDescriptionAttribute), false);
-                if (attributes.Length == 0)
-                {
-                    return "";
-                }
-                return ((AssemblyDescriptionAttribute)attributes[0]).Description;
+                return attributes.Length == 0 ? "" : ((AssemblyDescriptionAttribute)attributes[0]).Description;
             }
         }
 
@@ -60,11 +56,7 @@ namespace AICheckers
             get
             {
                 object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
-                if (attributes.Length == 0)
-                {
-                    return "";
-                }
-                return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
+                return attributes.Length == 0 ? "" : ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
             }
         }
 

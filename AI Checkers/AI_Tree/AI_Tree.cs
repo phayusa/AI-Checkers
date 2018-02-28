@@ -196,9 +196,6 @@ namespace AICheckers
                 }
             }
 
-            //Check strategy
-            //TODO: Kinging code here
-
 
             //Subtract score if we are evaluating an opponent's piece
             if (board[move.Source.Y, move.Source.X].Colour != Colour) score *= -1;

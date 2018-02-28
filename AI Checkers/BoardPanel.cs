@@ -248,7 +248,8 @@ namespace AICheckers
                 }
             }
 
-            _ai = new AI_Learn {Colour = CheckerColour.Red};
+            AI = new AI_Tree();
+            AI.Colour = CheckerColour.Red;
 
             _ai2 = new AI_Learn {Colour = CheckerColour.Black};
 

@@ -56,11 +56,11 @@ namespace AICheckers
 
         private Square[,] DeepCopy(Square[,] sourceBoard)
         {
-            Square[,] result = new Square[8, 8];
+            Square[,] result = new Square[ BoardPanel.sizeCheckers,  BoardPanel.sizeCheckers];
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j <  BoardPanel.sizeCheckers; j++)
                 {
                     result[i, j] = new Square
                     {
@@ -86,9 +86,9 @@ namespace AICheckers
             vBoard = ExecuteVirtualMove(move, vBoard);
 
             //Calculate the other player's moves
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
                 {
                     if (vBoard[i, j].Colour != moveColour)
                     {
@@ -116,8 +116,8 @@ namespace AICheckers
             board[move.Source.Y, move.Source.X].King = false;
 
             //Kinging
-            if ((move.Destination.Y == 7 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
-                || (move.Destination.Y == 0 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
+            if ((move.Destination.Y == BoardPanel.sizeCheckers-1 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+                || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
                 board[move.Destination.Y, move.Destination.X].King = true;
             }
@@ -172,9 +172,9 @@ namespace AICheckers
             }
 
             //Check if piece is at risk
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
                 {
                     if (board[i, j].Colour == Colour)
                     {

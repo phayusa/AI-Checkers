@@ -14,6 +14,7 @@ namespace AICheckers
             Console.WriteLine(AssemblyDescription);
             Console.WriteLine();
         }
+      
 
         private void timerRefresh_Tick(object sender, EventArgs e)
         {

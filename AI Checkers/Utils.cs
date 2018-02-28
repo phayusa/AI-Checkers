@@ -19,6 +19,24 @@ namespace AICheckers
                     }
             return result.ToArray();
         }
+        
+        public static Move[] GetAllMovedByColor(Square[,] Board, CheckerColour color)
+        {
+            List<Move> result = new List<Move>();
+            for (int x = 0; x < BoardPanel.sizeCheckers; x++)
+            for (int y = 0; y < BoardPanel.sizeCheckers; y++)
+                if (Board[y,x].Colour == color)
+                {
+                    foreach (Move move in GetOpenSquares(Board, new Point(x, y)))
+                        result.Add(move);
+                }
+
+            Move[] captured = GetAllMoveCapturedByColor(Board, color);
+            if (captured.Any())
+                return captured;
+            
+            return result.ToArray();
+        }
 
         //Convenience method
         public static Move[] GetOpenSquares(Square[,] board, Point checker)

@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Drawing;
 
 namespace AICheckers
 {
-    class AI_Tree : IAI
+    class AI_Learn : IAI
     {
         int AI_MAXPLYLEVEL = 2;
 
@@ -18,27 +20,63 @@ namespace AICheckers
         int WEIGHT_ATRISK = 3;
         int WEIGHT_KINGATRISK = 4;
 
-        private Tree<Move> _gameTree;
+        //Strategic
+        int WEIGHT_MAKEKING = 1;
 
-        public CheckerColour Colour { get; set; }
+        static Dictionary<Square[,], List<Move>> memory = new Dictionary<Square[,], List<Move>>();
+
+        CheckerColour colour;
+
+        Tree<Move> gameTree;
+
+        public CheckerColour Colour
+        {
+            get { return colour; }
+            set { colour = value; }
+        }
+
+        private List<Move> get_knowns_childs(Square[,] board)
+        {
+            Move[] possibilities = Utils.GetAllMovedByColor(board, colour);
+            
+            if (memory.ContainsKey(board))
+            {
+                List<Move> played_moved = memory[board];
+                if (played_moved.Count < possibilities.Length)
+                {
+                    int indexToGet = played_moved.Any() ? played_moved.Count : 0;
+                    played_moved.Add(possibilities[indexToGet]);
+                    memory.Add(board, played_moved);
+                }
+                return played_moved;
+            }
+
+            List<Move> to_play = new List<Move>();
+            to_play.Add(possibilities[0]);
+            memory.Add(board, to_play);
+
+            return to_play;
+        }
+
 
         public Move Process(Square[,] board)
         {
             Console.WriteLine();
-            Console.WriteLine(@"AI: Building Game Tree...");
+            Console.WriteLine("AI: Building Game Tree...");
 
-            _gameTree = new Tree<Move>(new Move());
+            gameTree = new Tree<Move>(new Move());
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
                 {
                     if (board[i, j].Colour == Colour)
                     {
+                        // TODO : Check if all exists and Calculate if not full
                         foreach (Move myPossibleMove in Utils.GetOpenSquares(board, new Point(j, i)))
                         {
-                            
-                            CalculateChildMoves(0, _gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(board));
+
+                            CalculateChildMoves(0, gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(board));
 
                             //gameTree.AddChildren(Utils.GetOpenSquares(Board, new Point(j, i)));
                         }
@@ -47,7 +85,7 @@ namespace AICheckers
             }
 
             Console.WriteLine();
-            Console.WriteLine(@"AI: Scoring Game Tree...");
+            Console.WriteLine("AI: Scoring Game Tree...");
 
             ScoreTreeMoves(board);
 
@@ -56,17 +94,15 @@ namespace AICheckers
 
         private Square[,] DeepCopy(Square[,] sourceBoard)
         {
-            Square[,] result = new Square[ BoardPanel.sizeCheckers,  BoardPanel.sizeCheckers];
+            Square[,] result = new Square[BoardPanel.sizeCheckers, BoardPanel.sizeCheckers];
 
             for (int i = 0; i < BoardPanel.sizeCheckers; i++)
             {
-                for (int j = 0; j <  BoardPanel.sizeCheckers; j++)
+                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
                 {
-                    result[i, j] = new Square
-                    {
-                        Colour = sourceBoard[i, j].Colour,
-                        King = sourceBoard[i, j].King
-                    };
+                    result[i, j] = new Square();
+                    result[i, j].Colour = sourceBoard[i, j].Colour;
+                    result[i, j].King = sourceBoard[i, j].King;
                 }
             }
 
@@ -108,29 +144,29 @@ namespace AICheckers
             }
         }
 
-        private Square[,] ExecuteVirtualMove(Move move, Square[,] board)
+        private Square[,] ExecuteVirtualMove(Move move, Square[,] Board)
         {
-            board[move.Destination.Y, move.Destination.X].Colour = board[move.Source.Y, move.Source.X].Colour;
-            board[move.Destination.Y, move.Destination.X].King = board[move.Source.Y, move.Source.X].King;
-            board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
-            board[move.Source.Y, move.Source.X].King = false;
+            Board[move.Destination.Y, move.Destination.X].Colour = Board[move.Source.Y, move.Source.X].Colour;
+            Board[move.Destination.Y, move.Destination.X].King = Board[move.Source.Y, move.Source.X].King;
+            Board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
+            Board[move.Source.Y, move.Source.X].King = false;
 
             //Kinging
-            if ((move.Destination.Y == BoardPanel.sizeCheckers-1 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
-                || (move.Destination.Y == 0 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
+            if ((move.Destination.Y == (BoardPanel.sizeCheckers - 1) && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+                || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
-                board[move.Destination.Y, move.Destination.X].King = true;
+                Board[move.Destination.Y, move.Destination.X].King = true;
             }
 
-            return board;
+            return Board;
         }
 
-        private void ScoreTreeMoves(Square[,] board)
+        private void ScoreTreeMoves(Square[,] Board)
         {
             //Iterate over top-level (currently possible) moves
-            Action<Move> scoreMove = move => move.Score = ScoreMove(move, board);
+            Action<Move> scoreMove = (Move move) => move.Score = ScoreMove(move, Board);
 
-            foreach (Tree<Move> possibleMove in _gameTree.Children)
+            foreach (Tree<Move> possibleMove in gameTree.Children)
             {
                 possibleMove.Traverse(scoreMove);
             }
@@ -141,18 +177,18 @@ namespace AICheckers
         {
             //Iterate over top-level (currently possible) moves
 
-            int[] branchSum = {0};
-            Action<Move> sumScores = move => branchSum[0] += move.Score;
+            int branchSum = 0;
+            Action<Move> sumScores = (Move move) => branchSum += move.Score;
 
-            foreach (Tree<Move> possibleMove in _gameTree.Children)
+            foreach (Tree<Move> possibleMove in gameTree.Children)
             {
                 possibleMove.Traverse(sumScores);
-                possibleMove.Value.Score += branchSum[0];
-                branchSum[0] = 0;
+                possibleMove.Value.Score += branchSum;
+                branchSum = 0;
             }
 
             //Return highest score
-            return _gameTree.Children.OrderByDescending(o => o.Value.Score).ToList()[0].Value;
+            return gameTree.Children.OrderByDescending(o => o.Value.Score).ToList()[0].Value;
         }
 
         private int ScoreMove(Move move, Square[,] board)
@@ -201,14 +237,14 @@ namespace AICheckers
 
 
             //Subtract score if we are evaluating an opponent's piece
-            if (board[move.Source.Y, move.Source.X].Colour != Colour) score *= -1;
+            if (board[move.Source.Y, move.Source.X].Colour != colour) score *= -1;
 
             Console.WriteLine(
-                @"{0,-5} {1} Score: {2,2}",
+                "{0,-5} {1} Score: {2,2}",
                 board[move.Source.Y, move.Source.X].Colour.ToString(),
-                move,
+                move.ToString(),
                 score
-                ); 
+                );
 
             return score;
         }

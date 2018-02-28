@@ -1,0 +1,19 @@
+﻿<Properties StartupConfiguration="{6327F3E2-65F7-499A-976F-9FE1E412B52E}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="AI Checkers/AI_Learn/AI_Learn.cs">
+    <Files>
+      <File FileName="AI Checkers/AI_Tree/AI_Tree.cs" Line="173" Column="13" />
+      <File FileName="AI Checkers/BoardPanel.cs" Line="274" Column="14" />
+      <File FileName="AI Checkers/IAI.cs" Line="10" Column="35" />
+      <File FileName="AI Checkers/AI_Learn/AI_Learn.cs" Line="42" Column="38" />
+      <File FileName="AI Checkers/Tree.cs" Line="15" Column="24" />
+      <File FileName="AI Checkers/AI_Random/AI_Random.cs" Line="26" Column="71" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.AI_220Checkers PreferredExecutionTarget="MonoDevelop.Default" />
+  <MultiItemStartupConfigurations />
+</Properties>

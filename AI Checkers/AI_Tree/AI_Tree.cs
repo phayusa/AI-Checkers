@@ -116,8 +116,8 @@ namespace AICheckers
             board[move.Source.Y, move.Source.X].King = false;
 
             //Kinging
-            if ((move.Destination.Y == BoardPanel.sizeCheckers-1 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
-                || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
+            if ((move.Destination.Y == BoardPanel.sizeCheckers-1 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+                || (move.Destination.Y == 0 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
                 board[move.Destination.Y, move.Destination.X].King = true;
             }

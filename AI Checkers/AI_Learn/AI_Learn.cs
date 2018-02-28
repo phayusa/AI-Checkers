@@ -59,7 +59,7 @@ namespace AICheckers
         }
 
 
-        public Move Process(Square[,] Board)
+        public Move Process(Square[,] board)
         {
             Console.WriteLine();
             Console.WriteLine("AI: Building Game Tree...");
@@ -73,10 +73,10 @@ namespace AICheckers
                     if (board[i, j].Colour == Colour)
                     {
                         // TODO : Check if all exists and Calculate if not full
-                        foreach (Move myPossibleMove in Utils.GetOpenSquares(Board, new Point(j, i)))
+                        foreach (Move myPossibleMove in Utils.GetOpenSquares(board, new Point(j, i)))
                         {
 
-                            CalculateChildMoves(0, gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(Board));
+                            CalculateChildMoves(0, gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(board));
 
                             //gameTree.AddChildren(Utils.GetOpenSquares(Board, new Point(j, i)));
                         }
@@ -87,7 +87,7 @@ namespace AICheckers
             Console.WriteLine();
             Console.WriteLine("AI: Scoring Game Tree...");
 
-            ScoreTreeMoves(Board);
+            ScoreTreeMoves(board);
 
             return SumTreeMoves();
         }

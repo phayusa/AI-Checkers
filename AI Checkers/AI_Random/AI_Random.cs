@@ -12,9 +12,9 @@ namespace AICheckers
         {
             List<Move> moves = new List<Move>();
 
-            Move[] captured = Utils.GetAllMoveCapturedByColor(Board, Colour);
+            Move[] captured = Utils.GetAllMoveCapturedByColor(board, Colour);
             
-            if (captured.Any())
+            if (captured.Length != 0)
                 return captured[(new Random()).Next(captured.Length)];
             
             for (int i = 0; i < 10; i++)

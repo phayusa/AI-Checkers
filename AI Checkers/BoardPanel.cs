@@ -248,10 +248,11 @@ namespace AICheckers
                 }
             }
 
-            AI = new AI_Tree();
-            AI.Colour = CheckerColour.Red;
+            //_ai = new AI_Tree();
+            //_ai.Colour = CheckerColour.Red;
+            _ai = new AI_Random { Colour = CheckerColour.Red };
 
-            _ai2 = new AI_Learn {Colour = CheckerColour.Black};
+            _ai2 = new AI_Random {Colour = CheckerColour.Black};
 
             moves_played = new List<Tuple<CheckerColour, Move>>();
         }
@@ -287,7 +288,7 @@ namespace AICheckers
 
             
             // Let the AI play
-            /*if (_ai != null && _ai.Colour == _currentTurn)
+            if (_ai != null && _ai.Colour == _currentTurn)
             {
                 Move aiMove = _ai.Process(_board);
                 MoveChecker(aiMove);
@@ -297,7 +298,7 @@ namespace AICheckers
             {
                 Move aiMove = _ai2.Process(_board);
                 MoveChecker(aiMove);
-            }*/
+            }
         }
     }
 }

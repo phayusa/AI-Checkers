@@ -8,8 +8,6 @@ namespace AICheckers
 {
     class AI_Learn : IAI
     {
-        int AI_MAXPLYLEVEL = 2;
-
         //Offensive
         int WEIGHT_CAPTUREPIECE = 2;
         int WEIGHT_CAPTUREKING = 1;
@@ -20,14 +18,9 @@ namespace AICheckers
         int WEIGHT_ATRISK = 3;
         int WEIGHT_KINGATRISK = 4;
 
-        //Strategic
-        int WEIGHT_MAKEKING = 1;
-
         static Dictionary<Square[,], List<Move>> memory = new Dictionary<Square[,], List<Move>>();
 
         CheckerColour colour;
-
-        Tree<Move> gameTree;
 
         public CheckerColour Colour
         {
@@ -35,61 +28,134 @@ namespace AICheckers
             set { colour = value; }
         }
 
-        private List<Move> get_knowns_childs(Square[,] board)
+        // Get the best move by searching in the graph
+        private Move GetBestMove(Square[,] board)
         {
+            // We get all the possibilities for this state
             Move[] possibilities = Utils.GetAllMovedByColor(board, colour);
+
+            foreach(Move p in possibilities){
+                Console.WriteLine("x "+p.Source.X+" y "+p.Source.Y);
+                Console.WriteLine("cap "+p.Captures);
+            }
             
             if (memory.ContainsKey(board))
             {
                 List<Move> played_moved = memory[board];
                 if (played_moved.Count < possibilities.Length)
                 {
-                    int indexToGet = played_moved.Any() ? played_moved.Count : 0;
+                    int indexToGet = played_moved.Any() ? played_moved.Count: 0;
                     played_moved.Add(possibilities[indexToGet]);
+                    memory.Remove(board);
                     memory.Add(board, played_moved);
+
+                    return possibilities[indexToGet];
                 }
-                return played_moved;
+
+                int best_score = ScoreByChild(board, played_moved[0], colour);
+                Move best_move = played_moved[0];
+
+                // Looking for the best move in child
+                foreach(Move move in played_moved){
+                    int test_score = ScoreByChild(board, move, colour);
+                    if (best_score < test_score){
+                        best_score = test_score;
+                        best_move = move;
+                    }
+                }
+                return best_move;
+
+
+
             }
 
             List<Move> to_play = new List<Move>();
             to_play.Add(possibilities[0]);
             memory.Add(board, to_play);
 
-            return to_play;
+            Console.WriteLine(possibilities[0].Source.X+" "+possibilities[0].Source.Y);
+
+            return possibilities[0];
         }
 
+        private int ScoreByChild(Square[,] board, Move move, CheckerColour colour_to_test){
+            int count = 0;
+            int count_opponent = 0;
+
+            CheckerColour opponent_color = colour_to_test == CheckerColour.Black ? CheckerColour.Red : CheckerColour.Black;
+
+
+            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
+                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
+                    if (board[j, i].Colour == colour)
+                        count++;
+                    else
+                        if (board[j, i].Colour == opponent_color)
+                        count_opponent++;
+            if (count == 0)
+                return -999;
+            if (count_opponent == 0)
+                return 999;
+            
+            // Avoid to pass the object by reference
+            Square[,] test_board = DeepCopy(board);
+
+            // Make the move on the saved board
+            ExecuteVirtualMove(move, test_board);
+            
+            // We get all the possibilities for this state
+            Move[] possibilities = Utils.GetAllMovedByColor(board, colour_to_test);
+
+            if (possibilities.Count() == 0)
+                return 0;
+
+            int score = ScoreMove(move, board, colour_to_test);
+
+            // We limit our search at our known states
+            if (memory.ContainsKey(board))
+            {
+                List<Move> played_moved = memory[board];
+                // We have not enough information on the state we must try all the possibilites
+                if (played_moved.Count < possibilities.Length)
+                {
+                    int indexToGet = played_moved.Any() ? played_moved.Count : 0;
+                    played_moved.Add(possibilities[indexToGet]);
+                    memory.Remove(board);
+                    memory.Add(board, played_moved);
+
+                    Square[,] test_board_bis = DeepCopy(test_board);
+                    ExecuteVirtualMove(possibilities[indexToGet], test_board_bis);
+                    score += ScoreByChild(test_board, possibilities[indexToGet], opponent_color);
+
+                }else{
+                    
+                    foreach(Move test_move in played_moved){
+                        Square[,] test_board_bis = DeepCopy(test_board);
+                        ExecuteVirtualMove(test_move, test_board_bis);
+                        score += ScoreByChild(test_board, test_move, opponent_color);
+                    }
+                }
+
+                return score;
+
+
+            }else{
+                List<Move> to_play = new List<Move>();
+                to_play.Add(possibilities[0]);
+                memory.Add(board, to_play);
+
+                Square[,] test_board_bis = DeepCopy(test_board);
+                ExecuteVirtualMove(possibilities[0], test_board_bis);
+                return ScoreByChild(test_board, possibilities[0], opponent_color);
+            }
+        }
 
         public Move Process(Square[,] board)
         {
             Console.WriteLine();
             Console.WriteLine("AI: Building Game Tree...");
 
-            gameTree = new Tree<Move>(new Move());
-
-            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
-            {
-                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
-                {
-                    if (board[i, j].Colour == Colour)
-                    {
-                        // TODO : Check if all exists and Calculate if not full
-                        foreach (Move myPossibleMove in Utils.GetOpenSquares(board, new Point(j, i)))
-                        {
-
-                            CalculateChildMoves(0, gameTree.AddChild(myPossibleMove), myPossibleMove, DeepCopy(board));
-
-                            //gameTree.AddChildren(Utils.GetOpenSquares(Board, new Point(j, i)));
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine();
-            Console.WriteLine("AI: Scoring Game Tree...");
-
-            ScoreTreeMoves(board);
-
-            return SumTreeMoves();
+            return GetBestMove(board);
         }
 
         private Square[,] DeepCopy(Square[,] sourceBoard)
@@ -109,91 +175,39 @@ namespace AICheckers
             return result;
         }
 
-        private void CalculateChildMoves(int recursionLevel, Tree<Move> branch, Move move, Square[,] vBoard)
+        private Square[,] ExecuteVirtualMove(Move move, Square[,] board)
         {
-            if (recursionLevel >= AI_MAXPLYLEVEL)
-            {
-                return;
-            }
-
-            CheckerColour moveColour = vBoard[move.Source.Y, move.Source.X].Colour;
-
-            //Move the checker
-            vBoard = ExecuteVirtualMove(move, vBoard);
-
-            //Calculate the other player's moves
-            for (int i = 0; i < BoardPanel.sizeCheckers; i++)
-            {
-                for (int j = 0; j < BoardPanel.sizeCheckers; j++)
-                {
-                    if (vBoard[i, j].Colour != moveColour)
-                    {
-                        foreach (Move otherPlayerMove in Utils.GetOpenSquares(vBoard, new Point(j, i)))
-                        {
-                            if (vBoard[i, j].Colour != CheckerColour.Empty)
-                            {
-                                CalculateChildMoves(
-                                    ++recursionLevel,
-                                    branch.AddChild(otherPlayerMove),
-                                    otherPlayerMove,
-                                    DeepCopy(vBoard));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private Square[,] ExecuteVirtualMove(Move move, Square[,] Board)
-        {
-            Board[move.Destination.Y, move.Destination.X].Colour = Board[move.Source.Y, move.Source.X].Colour;
-            Board[move.Destination.Y, move.Destination.X].King = Board[move.Source.Y, move.Source.X].King;
-            Board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
-            Board[move.Source.Y, move.Source.X].King = false;
+            board[move.Destination.Y, move.Destination.X].Colour = board[move.Source.Y, move.Source.X].Colour;
+            board[move.Destination.Y, move.Destination.X].King = board[move.Source.Y, move.Source.X].King;
+            board[move.Source.Y, move.Source.X].Colour = CheckerColour.Empty;
+            board[move.Source.Y, move.Source.X].King = false;
 
             //Kinging
-            if ((move.Destination.Y == (BoardPanel.sizeCheckers - 1) && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
-                || (move.Destination.Y == 0 && Board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
+            if ((move.Destination.Y == (BoardPanel.sizeCheckers - 1) && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Red)
+                || (move.Destination.Y == 0 && board[move.Destination.Y, move.Destination.X].Colour == CheckerColour.Black))
             {
-                Board[move.Destination.Y, move.Destination.X].King = true;
+                board[move.Destination.Y, move.Destination.X].King = true;
             }
 
-            return Board;
-        }
-
-        private void ScoreTreeMoves(Square[,] Board)
-        {
-            //Iterate over top-level (currently possible) moves
-            Action<Move> scoreMove = (Move move) => move.Score = ScoreMove(move, Board);
-
-            foreach (Tree<Move> possibleMove in gameTree.Children)
+            // Clean all the captures points
+            foreach (Point point in move.Captures)
             {
-                possibleMove.Traverse(scoreMove);
+                //Reset the square and the selected checker
+                board[point.Y, point.X].Colour = CheckerColour.Empty;
+                board[point.Y, point.X].King = false;
             }
 
+            return board;
         }
 
-        private Move SumTreeMoves()
-        {
-            //Iterate over top-level (currently possible) moves
-
-            int branchSum = 0;
-            Action<Move> sumScores = (Move move) => branchSum += move.Score;
-
-            foreach (Tree<Move> possibleMove in gameTree.Children)
-            {
-                possibleMove.Traverse(sumScores);
-                possibleMove.Value.Score += branchSum;
-                branchSum = 0;
-            }
-
-            //Return highest score
-            return gameTree.Children.OrderByDescending(o => o.Value.Score).ToList()[0].Value;
-        }
-
-        private int ScoreMove(Move move, Square[,] board)
+        private int ScoreMove(Move move, Square[,] board, CheckerColour test_color)
         {
             int score = 0;
+
+            int count_opponent = 0;
+            int count_piece = 0;
+
+            CheckerColour opponent_color = test_color == CheckerColour.Black ? CheckerColour.Red : CheckerColour.Black;
 
             //Offensive traits
             score += move.Captures.Count * WEIGHT_CAPTUREPIECE;
@@ -212,9 +226,10 @@ namespace AICheckers
             {
                 for (int j = 0; j < BoardPanel.sizeCheckers; j++)
                 {
-                    if (board[i, j].Colour == Colour)
+                    if (board[j, i].Colour == test_color)
                     {
-                        foreach (Move opponentMove in Utils.GetOpenSquares(board, new Point(j, i)))
+                        count_piece++;
+                        foreach (Move opponentMove in Utils.GetAllMovedByColor(board, opponent_color))
                         {
                             if (opponentMove.Captures.Contains(move.Source))
                             {
@@ -229,22 +244,23 @@ namespace AICheckers
                             }
                         }
                     }
+
+                    if(board[j, i].Colour == opponent_color){
+                        count_opponent++;
+                    }
                 }
             }
 
-            //Check strategy
-            //TODO: Kinging code here
+            if (count_opponent == 0)
+                score += 999;
+            if (count_piece == 0)
+                score -= 999;
 
 
             //Subtract score if we are evaluating an opponent's piece
-            if (board[move.Source.Y, move.Source.X].Colour != colour) score *= -1;
+            if (board[move.Source.Y, move.Source.X].Colour != test_color) score *= -1;
 
-            Console.WriteLine(
-                "{0,-5} {1} Score: {2,2}",
-                board[move.Source.Y, move.Source.X].Colour.ToString(),
-                move.ToString(),
-                score
-                );
+            Console.WriteLine("Score : " + count_piece + " opponent " + count_opponent);
 
             return score;
         }

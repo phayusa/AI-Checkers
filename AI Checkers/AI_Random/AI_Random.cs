@@ -27,8 +27,9 @@ namespace AICheckers
                     }
                 }
             }
-
-            return moves[(new Random()).Next(moves.Count)];
+            if (moves.Count != 0)
+                return moves[(new Random()).Next(moves.Count)];
+            return null;
         }
     }
 }

@@ -173,12 +173,21 @@ namespace AICheckers
         {
             // Check if we have captued checkes
             Move[] moveWithCaptures = Utils.GetAllMoveCapturedByColor(_board, _currentTurn);
-            Console.WriteLine(@"Tour actuelle : "+move.Captures.Any());
-            Console.WriteLine(@"Tour actuelle : "+moveWithCaptures.Length);
+            if (moveWithCaptures.Any())
+            {   Console.WriteLine(@"Tour actuelle : " + move.Captures.Any());
+                Console.WriteLine(@"Tour actuelle : " + moveWithCaptures.Length);
+            }
 
-            if (!move.Captures.Any() && moveWithCaptures.Any())
+            if (!move.Captures.Any() && moveWithCaptures != null && moveWithCaptures.Any())
             {
-//                MessageBox.Show("Une capture est possible !!!");
+                Console.WriteLine("Played : " + move.Source.X + " " + move.Source.Y);
+
+                foreach(Move move2 in Utils.GetAllMoveCapturedByColor(_board, _currentTurn)){
+                    Console.WriteLine("Possible : " + move2.Source.X + " " + move2.Source.Y);
+                }
+
+                if (_ai == null || _ai2 == null)
+                    MessageBox.Show("Une capture est possible !!!");
                 return;
             }
 
@@ -252,7 +261,7 @@ namespace AICheckers
             //_ai.Colour = CheckerColour.Red;
             _ai = new AI_Random { Colour = CheckerColour.Red };
 
-            _ai2 = new AI_Random {Colour = CheckerColour.Black};
+            _ai2 = new AI_Learn {Colour = CheckerColour.Black};
 
             moves_played = new List<Tuple<CheckerColour, Move>>();
         }

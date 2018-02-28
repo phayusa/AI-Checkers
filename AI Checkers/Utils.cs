@@ -1,21 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Drawing;
 
 namespace AICheckers
 {
     static class Utils
     {
-        public static Move[] GetAllMoveCapturedByColor(Square[,] Board, CheckerColour color)
+        public static Move[] GetAllMoveCapturedByColor(Square[,] board, CheckerColour color)
         {
             List<Move> result = new List<Move>();
             for (int x = 0; x < BoardPanel.sizeCheckers; x++)
                 for (int y = 0; y < BoardPanel.sizeCheckers; y++)
-                    if (Board[y,x].Colour == color)
+                    if (board[y,x].Colour == color)
                     {
-                        foreach (Move move in GetOpenSquares(Board, new Point(x, y)))
+                        foreach (Move move in GetOpenSquares(board, new Point(x, y)))
                             if (move.Captures.Any())
                                 result.Add(move);
                     }
@@ -23,36 +21,35 @@ namespace AICheckers
         }
 
         //Convenience method
-        public static Move[] GetOpenSquares(Square[,] Board, Point checker)
+        public static Move[] GetOpenSquares(Square[,] board, Point checker)
         {
-            return GetOpenSquares(Board, checker, new Move(-1, -1, -1, -1), null);
+            return GetOpenSquares(board, checker, new Move(-1, -1, -1, -1), null);
         }
 
-        private static Move[] GetOpenSquares(Square[,] Board, Point checker, Move lastMove, List<Point> priorPositions)
+        private static Move[] GetOpenSquares(Square[,] board, Point checker, Move lastMove, List<Point> priorPositions)
         {
             if (priorPositions == null)
             {
-                priorPositions = new List<Point>();
-                priorPositions.Add(checker);
+                priorPositions = new List<Point> {checker};
             }
 
-            List<Move> OpenSquares = new List<Move>();
+            List<Move> openSquares = new List<Move>();
 
             //Top Left
-            if (Board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Red || Board[priorPositions[0].Y, priorPositions[0].X].King)        //Stop regular red pieces from moving backwards
+            if (board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Red || board[priorPositions[0].Y, priorPositions[0].X].King)        //Stop regular red pieces from moving backwards
             {
                 if (IsValidPoint(checker.X - 1, checker.Y - 1))
                 {
-                    if (Board[checker.Y - 1, checker.X - 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)  //Allow immediate empty spaces if it's the first jump
+                    if (board[checker.Y - 1, checker.X - 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)  //Allow immediate empty spaces if it's the first jump
                     {
-                        OpenSquares.Add(new Move(priorPositions[0], checker.X - 1, checker.Y - 1));
+                        openSquares.Add(new Move(priorPositions[0], checker.X - 1, checker.Y - 1));
                     }
                     //Check for a capturable piece
                     else if (IsValidPoint(checker.X - 2, checker.Y - 2)
                         && ((checker.X - 2) != lastMove.Destination.X || (checker.Y - 2) != lastMove.Destination.Y)
                         && ((checker.X - 2) != priorPositions[0].X || (checker.Y - 2) != priorPositions[0].Y)
-                        && Board[checker.Y - 1, checker.X - 1].Colour != Board[checker.Y, checker.X].Colour
-                        && Board[checker.Y - 2, checker.X - 2].Colour == CheckerColour.Empty)
+                        && board[checker.Y - 1, checker.X - 1].Colour != board[checker.Y, checker.X].Colour
+                        && board[checker.Y - 2, checker.X - 2].Colour == CheckerColour.Empty)
                     {
                         Point newDest = new Point(checker.X - 2, checker.Y - 2);
                         if (!priorPositions.Contains(newDest))
@@ -60,32 +57,32 @@ namespace AICheckers
                             Move move = new Move(priorPositions[0], newDest);
                             move.Captures.Add(new Point(checker.X - 1, checker.Y - 1));
                             move.Captures.AddRange(lastMove.Captures);
-                            OpenSquares.Add(move);
+                            openSquares.Add(move);
 
                             priorPositions.Add(newDest);
 
                             //Use recursion to find multiple captures                        
-                            OpenSquares.AddRange(GetOpenSquares(Board, new Point(checker.X - 2, checker.Y - 2), move, priorPositions));
+                            openSquares.AddRange(GetOpenSquares(board, new Point(checker.X - 2, checker.Y - 2), move, priorPositions));
                         }
                     }
                 }
             }
 
             //Top Right
-            if (Board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Red || Board[priorPositions[0].Y, priorPositions[0].X].King)
+            if (board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Red || board[priorPositions[0].Y, priorPositions[0].X].King)
             {
                 if (IsValidPoint(checker.X + 1, checker.Y - 1))
                 {
-                    if (Board[checker.Y - 1, checker.X + 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
+                    if (board[checker.Y - 1, checker.X + 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
                     {
-                        OpenSquares.Add(new Move(priorPositions[0], checker.X + 1, checker.Y - 1));
+                        openSquares.Add(new Move(priorPositions[0], checker.X + 1, checker.Y - 1));
                     }
                     //Check for a capturable piece
                     else if (IsValidPoint(checker.X + 2, checker.Y - 2)
                         && ((checker.X + 2) != lastMove.Destination.X || (checker.Y - 2) != lastMove.Destination.Y)
                         && ((checker.X + 2) != priorPositions[0].X || (checker.Y - 2) != priorPositions[0].Y)
-                        && Board[checker.Y - 1, checker.X + 1].Colour != Board[checker.Y, checker.X].Colour
-                        && Board[checker.Y - 2, checker.X + 2].Colour == CheckerColour.Empty)
+                        && board[checker.Y - 1, checker.X + 1].Colour != board[checker.Y, checker.X].Colour
+                        && board[checker.Y - 2, checker.X + 2].Colour == CheckerColour.Empty)
                     {
                         Point newDest = new Point(checker.X + 2, checker.Y - 2);
                         if (!priorPositions.Contains(new Point(checker.X + 2, checker.Y - 2)))
@@ -93,32 +90,32 @@ namespace AICheckers
                             Move move = new Move(priorPositions[0], newDest);
                             move.Captures.Add(new Point(checker.X + 1, checker.Y - 1));
                             move.Captures.AddRange(lastMove.Captures);
-                            OpenSquares.Add(move);
+                            openSquares.Add(move);
 
                             priorPositions.Add(newDest);
 
                             //Use recursion to find multiple captures
-                            OpenSquares.AddRange(GetOpenSquares(Board, new Point(checker.X + 2, checker.Y - 2), move, priorPositions));
+                            openSquares.AddRange(GetOpenSquares(board, new Point(checker.X + 2, checker.Y - 2), move, priorPositions));
                         }
                     }
                 }
             }
 
             //Bottom Left
-            if (Board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Black || Board[priorPositions[0].Y, priorPositions[0].X].King)
+            if (board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Black || board[priorPositions[0].Y, priorPositions[0].X].King)
             {
                 if (IsValidPoint(checker.X - 1, checker.Y + 1))
                 {
-                    if (Board[checker.Y + 1, checker.X - 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
+                    if (board[checker.Y + 1, checker.X - 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
                     {
-                        OpenSquares.Add(new Move(priorPositions[0], checker.X - 1, checker.Y + 1));
+                        openSquares.Add(new Move(priorPositions[0], checker.X - 1, checker.Y + 1));
                     }
                     //Check for a capturable piece
                     else if (IsValidPoint(checker.X - 2, checker.Y + 2)
                         && ((checker.X - 2) != lastMove.Destination.X || (checker.Y + 2) != lastMove.Destination.Y)
                         && ((checker.X - 2) != priorPositions[0].X || (checker.Y + 2) != priorPositions[0].Y)
-                        && Board[checker.Y + 1, checker.X - 1].Colour != Board[checker.Y, checker.X].Colour
-                        && Board[checker.Y + 2, checker.X - 2].Colour == CheckerColour.Empty)
+                        && board[checker.Y + 1, checker.X - 1].Colour != board[checker.Y, checker.X].Colour
+                        && board[checker.Y + 2, checker.X - 2].Colour == CheckerColour.Empty)
                     {
                         Point newDest = new Point(checker.X - 2, checker.Y + 2);
                         if (!priorPositions.Contains(newDest))
@@ -126,32 +123,32 @@ namespace AICheckers
                             Move move = new Move(priorPositions[0], newDest);
                             move.Captures.Add(new Point(checker.X - 1, checker.Y + 1));
                             move.Captures.AddRange(lastMove.Captures);
-                            OpenSquares.Add(move);
+                            openSquares.Add(move);
 
                             priorPositions.Add(newDest);
 
                             //Use recursion to find multiple captures
-                            OpenSquares.AddRange(GetOpenSquares(Board, new Point(checker.X - 2, checker.Y + 2), move, priorPositions));
+                            openSquares.AddRange(GetOpenSquares(board, new Point(checker.X - 2, checker.Y + 2), move, priorPositions));
                         }
                     }
                 }
             }
 
             //Bottom Right
-            if (Board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Black || Board[priorPositions[0].Y, priorPositions[0].X].King)
+            if (board[priorPositions[0].Y, priorPositions[0].X].Colour != CheckerColour.Black || board[priorPositions[0].Y, priorPositions[0].X].King)
             {
                 if (IsValidPoint(checker.X + 1, checker.Y + 1))
                 {
-                    if (Board[checker.Y + 1, checker.X + 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
+                    if (board[checker.Y + 1, checker.X + 1].Colour == CheckerColour.Empty && lastMove.Destination.X == -1)
                     {
-                        OpenSquares.Add(new Move(priorPositions[0], checker.X + 1, checker.Y + 1));
+                        openSquares.Add(new Move(priorPositions[0], checker.X + 1, checker.Y + 1));
                     }
                     //Check for a capturable piece
                     else if (IsValidPoint(checker.X + 2, checker.Y + 2)
                         && ((checker.X + 2) != lastMove.Destination.X || (checker.Y + 2) != lastMove.Destination.Y)
                         && ((checker.X + 2) != priorPositions[0].X || (checker.Y + 2) != priorPositions[0].Y)
-                        && Board[checker.Y + 1, checker.X + 1].Colour != Board[checker.Y, checker.X].Colour
-                        && Board[checker.Y + 2, checker.X + 2].Colour == CheckerColour.Empty)
+                        && board[checker.Y + 1, checker.X + 1].Colour != board[checker.Y, checker.X].Colour
+                        && board[checker.Y + 2, checker.X + 2].Colour == CheckerColour.Empty)
                     {
                         Point newDest = new Point(checker.X + 2, checker.Y + 2);
                         if (!priorPositions.Contains(newDest))
@@ -159,65 +156,67 @@ namespace AICheckers
                             Move move = new Move(priorPositions[0], newDest);
                             move.Captures.Add(new Point(checker.X + 1, checker.Y + 1));
                             move.Captures.AddRange(lastMove.Captures);
-                            OpenSquares.Add(move);
+                            openSquares.Add(move);
 
                             priorPositions.Add(newDest);
 
                             //Use recursion to find multiple captures
-                            OpenSquares.AddRange(GetOpenSquares(Board, new Point(checker.X + 2, checker.Y + 2), move, priorPositions));
+                            openSquares.AddRange(GetOpenSquares(board, new Point(checker.X + 2, checker.Y + 2), move, priorPositions));
                         }
                     }
                 }
             }
 
             // The color of the player
-            CheckerColour playerColor = Board[checker.Y, checker.X].Colour;
+            CheckerColour playerColor = board[checker.Y, checker.X].Colour;
             // The possibility for the king to move
-            int[,] possibility = new int[4,2]{ {1,1},{1,-1}, {-1,1}, {-1,-1}};
+            int[,] possibility = { {1,1},{1,-1}, {-1,1}, {-1,-1}};
             ////King move
-            if ((Board[checker.Y, checker.X].King))
+            if ((board[checker.Y, checker.X].King))
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    int test_x = checker.X + possibility[i, 0];
-                    int test_y = checker.Y + possibility[i, 1];
+                    int testX = checker.X + possibility[i, 0];
+                    int testY = checker.Y + possibility[i, 1];
 
-                    List<Move> empty_move = new List<Move>();
-                    List<Move> captured_move = new List<Move>();
+                    List<Move> emptyMove = new List<Move>();
+                    List<Move> capturedMove = new List<Move>();
 
-                    while (IsValidPoint(test_y, test_x))
+                    while (IsValidPoint(testY, testX))
                     {
-                        if (Board[test_y, test_x].Colour == CheckerColour.Empty)
+                        if (board[testY, testX].Colour == CheckerColour.Empty)
                         {
-                            Move move = new Move(new Point(checker.X, checker.Y), new Point(test_x, test_y));
-                            empty_move.Add(move);
+                            Move move = new Move(new Point(checker.X, checker.Y), new Point(testX, testY));
+                            emptyMove.Add(move);
                         }
                         else
                         {
                             // Position of the king
-                            int further_x = test_x + possibility[i, 0];
-                            int further_y = test_y + possibility[i, 1];
+                            int furtherX = testX + possibility[i, 0];
+                            int furtherY = testY + possibility[i, 1];
 
                             // Check if the point to catch is a ennemy
                             // And if it is 
-                            if (IsValidPoint(further_x, further_y) && Board[test_y, test_x].Colour != playerColor && Board[further_y, further_x].Colour == CheckerColour.Empty)
+                            if (IsValidPoint(furtherX, furtherY) && board[testY, testX].Colour != playerColor && board[furtherY, furtherX].Colour == CheckerColour.Empty)
                             {
-                                empty_move.Clear();
-                                Move move = new Move(new Point(checker.X, checker.Y), new Point(further_x, further_y));
-                                move.Captures.Add(new Point(test_x, test_y));
+                                emptyMove.Clear();
+                                Move move = new Move(new Point(checker.X, checker.Y), new Point(furtherX, furtherY));
+                                move.Captures.Add(new Point(testX, testY));
                                 move.Captures.AddRange(lastMove.Captures);
 
                                 // Add the position
-                                OpenSquares.Add(move);
+                                openSquares.Add(move);
 
-                                Square[,] copy = Board.Clone() as Square[,];
+                                Square[,] copy = board.Clone() as Square[,];
 
-                                Square tmp = new Square();
-                                tmp.Colour = CheckerColour.Empty;
-                                copy[checker.Y, checker.X] = tmp;
-                                copy[test_y, test_x] = tmp;
+                                Square tmp = new Square {Colour = CheckerColour.Empty};
+                                if (copy != null)
+                                {
+                                    copy[checker.Y, checker.X] = tmp;
+                                    copy[testY, testX] = tmp;
 
-                                copy[further_y, further_x] = Board[checker.Y, checker.X];
+                                    copy[furtherY, furtherX] = board[checker.Y, checker.X];
+                                }
 
                                 break;
 
@@ -227,45 +226,33 @@ namespace AICheckers
                         }
 
                         // Iterate through all the possibility
-                        test_x += possibility[i, 0];
-                        test_y += possibility[i, 1];
+                        testX += possibility[i, 0];
+                        testY += possibility[i, 1];
 
                     }
 
 
-                    if (empty_move.Any())
-                    {
-                        OpenSquares.AddRange(empty_move);
-                    }
-                    else
-                    {
-                        OpenSquares.AddRange(captured_move);
-                    }
+                    openSquares.AddRange(emptyMove.Any() ? emptyMove : capturedMove);
                 }
             }
 
-            List<Move> captures_moves = new List<Move>();
+            List<Move> capturesMoves = new List<Move>();
             // Check Captures
-            foreach(Move move in OpenSquares)
+            foreach(Move move in openSquares)
             {
                 if (move.Captures.Any())
-                    captures_moves.Add(move);
+                    capturesMoves.Add(move);
             }
 
-            if (captures_moves.Any())
-                return captures_moves.ToArray();
-            return OpenSquares.ToArray();
+            if (capturesMoves.Any())
+                return capturesMoves.ToArray();
+            return openSquares.ToArray();
         }
 
         private static bool IsValidPoint(int x, int y)
         {
             if (0 <= x && x < BoardPanel.sizeCheckers && 0 <= y && y < BoardPanel.sizeCheckers) return true;
             return false;
-        }
-
-        private static bool IsValidPoint(Point point)
-        {
-            return (IsValidPoint(point.X, point.Y));
         }
     }
 }

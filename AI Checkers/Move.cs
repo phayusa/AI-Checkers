@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace AICheckers
@@ -14,8 +11,8 @@ namespace AICheckers
 
         public Move(Point source, Point destination)
         {
-            this.source = source;
-            this.destination = destination;
+            _source = source;
+            _destination = destination;
         }
 
         //Convenience constructors
@@ -34,37 +31,20 @@ namespace AICheckers
         {
         }
 
-        private Point source = new Point(-1, -1);
-        private Point destination = new Point(-1, -1);
-        private List<Point> captures = new List<Point>();
-        private int score = 0;
+        private readonly Point _source = new Point(-1, -1);
+        private readonly Point _destination = new Point(-1, -1);
 
-        public Point Source
-        {
-            get { return this.source; }
-            set { this.source = value; }
-        }
+        public Point Source => _source;
 
-        public Point Destination
-        {
-            get { return this.destination; }
-            set { this.destination = value; }
-        }
+        public Point Destination => _destination;
 
-        public List<Point> Captures
-        {
-            get { return captures; }
-        }
+        public List<Point> Captures { get; } = new List<Point>();
 
-        public int Score
-        {
-            get { return this.score; }
-            set { this.score = value; }
-        }
+        public int Score { get; set; }
 
         public override string ToString()
         {
-            return String.Format("Source: {0}, Dest: {1}", source, destination);
+            return $"Source: {_source}, Dest: {_destination}";
         }
     }
 }
